@@ -4,7 +4,7 @@ vk_device * vk_device_create(vk_instance * vk_inst, const char ** extension_name
 {
 	auto* ret = new vk_device();
 
-	vk::Instance inst = vk_instance_get_instance(vk_inst);
+	vk::Instance inst = vk_inst->vkInstance;
 	auto deviceList = inst.enumeratePhysicalDevices();
 	ret->vkPhysicalDevice = deviceList.front();
 

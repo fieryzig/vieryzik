@@ -19,8 +19,8 @@ SwapChainSupportDetails _querySwapchainSupport(vk::PhysicalDevice device, vk::Su
 template<typename T>
 T choose_by_cond(std::vector<T> Ts, std::function<bool(T)> cond, T legacy)
 {
-	for (const auto& T t : Ts) {
-		if (cond(T)) {
+	for (const T& t : Ts) {
+		if (cond(t)) {
 			return t;
 		}
 	}
@@ -60,7 +60,7 @@ vk_swapchain * vk_swapchain_create(
 		.setClipped(vk::Bool32(true))
 		.setOldSwapchain(VK_NULL_HANDLE);
 	ret->swapchain = device->vkDevice.createSwapchainKHR(info);
-	ret->images = device->vkDevice.getSwapchainImagesKHR(ret->swapchain, imageCount);
+	ret->images = device->vkDevice.getSwapchainImagesKHR(ret->swapchain);
 	ret->imageFormat = surfaceFormat.format;
 	ret->extent = extent;
 	return ret;
