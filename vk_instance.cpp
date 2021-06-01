@@ -1,10 +1,5 @@
 #include "vk.h"
 
-struct vk_instance
-{
-	vk::Instance		vkInstance = nullptr;
-};
-
 vk_instance* vk_instance_create()
 {
 	auto ret = new vk_instance();

@@ -1,11 +1,5 @@
 #include "vk.h"
 
-struct vk_device
-{
-	vk::Device			vkDevice = nullptr;
-	vk::PhysicalDevice	vkPhysicalDevice = nullptr;
-};
-
 vk_device * vk_device_create(vk_instance * vk_inst, const char ** extension_names, uint32_t extension_names_count)
 {
 	auto* ret = new vk_device();

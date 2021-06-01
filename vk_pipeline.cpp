@@ -25,23 +25,6 @@ vk::PipelineShaderStageCreateInfo vk_shader_create_##x(vk_device* device, const 
 DEFINE_VK_SHADER_CREATE(Vertex)
 DEFINE_VK_SHADER_CREATE(Fragment)
 
-
-struct vk_pipeline // only support graphics pipeline for now
-{
-	vk_device * device;
-	vk::Pipeline pipeline = nullptr;
-	std::vector<vk::PipelineShaderStageCreateInfo> shaders;
-	vk::PipelineVertexInputStateCreateInfo vertexInput;
-	vk::PipelineInputAssemblyStateCreateInfo inputAssembly;
-	vk::PipelineViewportStateCreateInfo viewport;
-	vk::PipelineRasterizationStateCreateInfo rasterizer;
-	vk::PipelineMultisampleStateCreateInfo multisampling;
-	vk::PipelineColorBlendStateCreateInfo colorBlend;
-	vk::PipelineLayout pipelineLayout;
-	vk::RenderPass renderPass;
-	uint32_t subpass;
-};
-
 vk_pipeline * vk_pipeline_create(vk_device * device)
 {
 	auto ret = new vk_pipeline();
