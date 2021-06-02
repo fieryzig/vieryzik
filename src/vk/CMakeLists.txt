@@ -1,0 +1,2 @@
+file(GLOB CPP_FILES_VK ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
+add_library(vk ${CPP_FILES_VK} ${HPP_FILES})
