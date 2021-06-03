@@ -18,6 +18,14 @@ int main()
 	vk_pipeline_prepare_default(pipeline, extent);
 	vk_pipeline_create_graphics_pipeline(pipeline);
 
+    auto createWindowSurface = std::bind(
+        glfwCreateWindowSurface,
+        vk_inst->vkInstance,
+        window,
+        nullptr,
+        std::placeholders::_1);
+    auto vk_surface = vk_surface_create(createWindowSurface);
+
 	while (!glfwWindowShouldClose(window)) {
 		glfwPollEvents();
 	}

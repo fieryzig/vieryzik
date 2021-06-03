@@ -51,6 +51,7 @@ struct vk_surface
 {
 	vk::SurfaceKHR surface;
 };
+vk_surface* vk_surface_create(std::function<VkResult(VkSurfaceKHR*)> createWindowSurface);
 
 // swapchain
 struct vk_swapchain
