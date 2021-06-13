@@ -10,28 +10,33 @@ int main()
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 	auto window = glfwCreateWindow(WIDTH, HEIGHT, "Vulkan", nullptr, nullptr);
-
-	auto vk_inst = vk_instance_create();
+    uint32_t glfwExtensionCount = 0;
+    auto glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
+    std::vector<const char*> extensions(glfwExtensions, glfwExtensions+glfwExtensionCount);
+    extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+	auto vk_inst = vk_instance_create(extensions);
+    auto createWindowSurface = std::bind(
+        glfwCreateWindowSurface,
+        vk_inst->instance,
+        window,
+        nullptr,
+        std::placeholders::_1);
+    auto vk_surface = vk_surface_create(createWindowSurface);
+    
 	auto device = vk_device_create(vk_inst, nullptr, 0);
 	auto pipeline = vk_pipeline_create(device);
 	VkExtent2D extent{};
 	vk_pipeline_prepare_default(pipeline, extent);
 	vk_pipeline_create_graphics_pipeline(pipeline);
-
-    auto createWindowSurface = std::bind(
-        glfwCreateWindowSurface,
-        vk_inst->vkInstance,
-        window,
-        nullptr,
-        std::placeholders::_1);
-    auto vk_surface = vk_surface_create(createWindowSurface);
-
+    
 	while (!glfwWindowShouldClose(window)) {
 		glfwPollEvents();
 	}
+
 	vk_device_wait_idle(device);
-	
 	vk_device_destroy(device);
+
+    vk_surface_destroy(vk_surface, vk_inst);
 	vk_instance_destroy(vk_inst);
 	return 0;
 }

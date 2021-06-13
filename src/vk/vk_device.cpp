@@ -4,9 +4,9 @@ vk_device * vk_device_create(vk_instance * vk_inst, const char ** extension_name
 {
 	auto* ret = new vk_device();
 
-	vk::Instance inst = vk_inst->vkInstance;
+	vk::Instance inst = vk_inst->instance;
 	auto deviceList = inst.enumeratePhysicalDevices();
-	ret->vkPhysicalDevice = deviceList.front();
+	ret->physicalDevice = deviceList.front();
 
 	std::vector<vk::DeviceQueueCreateInfo> dqc_infos;
 	std::vector<const char*> enabledDeviceExtensionNames;
@@ -21,23 +21,18 @@ vk_device * vk_device_create(vk_instance * vk_inst, const char ** extension_name
 		.setEnabledExtensionCount(uint32_t(enabledDeviceExtensionNames.size()))
 		.setPpEnabledExtensionNames(enabledDeviceExtensionNames.data())
 		.setPEnabledFeatures(nullptr);
-	ret->vkDevice = ret->vkPhysicalDevice.createDevice(deviceCreateInfo);
+	ret->device = ret->physicalDevice.createDevice(deviceCreateInfo);
 	return ret;
 }
 
 void vk_device_destroy(vk_device *device)
 {
-	device->vkDevice.destroy();
+	device->device.destroy();
 	delete(device);
-}
-
-VkDevice_T * vk_device_get_device(vk_device *device)
-{
-	return device->vkDevice;
 }
 
 void vk_device_wait_idle(vk_device * device)
 {
-	device->vkDevice.waitIdle();
+	device->device.waitIdle();
 }
 

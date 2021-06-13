@@ -12,8 +12,8 @@ VkShaderModule _createShaderModule(vk::Device device, const std::vector<char>& c
 #define DEFINE_VK_SHADER_CREATE( x ) \
 vk::PipelineShaderStageCreateInfo vk_shader_create_##x(vk_device* device, const std::vector<char>& code, const char* name="main") \
 {\
-	vk::Device vkDevice = device->vkDevice;\
-	VkShaderModule shaderModule = _createShaderModule(vkDevice, code);\
+	vk::Device _device = device->device;\
+	VkShaderModule shaderModule = _createShaderModule(_device, code);\
 	vk::PipelineShaderStageCreateInfo info;\
 	info.setStage(vk::ShaderStageFlagBits::e##x)\
 		.setModule(shaderModule)\
@@ -87,11 +87,11 @@ void vk_pipeline_prepare_default(vk_pipeline * pipeline, VkExtent2D swapChainExt
 			.setBlendConstants({ 0.0f, 0.0f, 0.0f, 0.0f });
 	}
 	{
-		vk::Device vkDevice = pipeline->device->vkDevice;
+		vk::Device device = pipeline->device->device;
 		vk::PipelineLayoutCreateInfo info;
 		info.setPushConstantRangeCount(0)
 			.setSetLayoutCount(0);
-		pipeline->pipelineLayout = vkDevice.createPipelineLayout(info);
+		pipeline->pipelineLayout = device.createPipelineLayout(info);
 	}
 }
 
@@ -111,7 +111,7 @@ void vk_pipeline_create_graphics_pipeline(vk_pipeline * pipeline)
 		.setRenderPass(pipeline->renderPass)
 		.setSubpass(pipeline->subpass)
 		.setBasePipelineHandle(VK_NULL_HANDLE);
-	vk::Device vkDevice = pipeline->device->vkDevice;
-	auto result = vkDevice.createGraphicsPipeline(VK_NULL_HANDLE, pipelineInfo);
+	vk::Device device = pipeline->device->device;
+	auto result = device.createGraphicsPipeline(VK_NULL_HANDLE, pipelineInfo);
 	pipeline->pipeline = result.value;
 }

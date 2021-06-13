@@ -2,19 +2,27 @@
 
 #include <vulkan/vulkan.hpp>
 
+// Const
+const std::vector<const char*> enabledLayers = {
+    "VK_LAYER_KHRONOS_validation"
+};
+const std::vector<const char*> deviceExtensions = {
+    VK_KHR_SWAPCHAIN_EXTENSION_NAME
+};
+
 // instance
 struct vk_instance
 {
-	vk::Instance		vkInstance = nullptr;
+	vk::Instance		instance = nullptr;
 };
-vk_instance* vk_instance_create();
+vk_instance* vk_instance_create(std::vector<const char*>);
 void vk_instance_destroy(vk_instance*);
 
 // device
 struct vk_device
 {
-	vk::Device			vkDevice = nullptr;
-	vk::PhysicalDevice	vkPhysicalDevice = nullptr;
+	vk::Device			device = nullptr;
+	vk::PhysicalDevice	physicalDevice = nullptr;
 };
 vk_device* vk_device_create(vk_instance* vk_inst, const char** extension_names, uint32_t extension_names_count);
 void vk_device_destroy(vk_device*);
@@ -52,6 +60,7 @@ struct vk_surface
 	vk::SurfaceKHR surface;
 };
 vk_surface* vk_surface_create(std::function<VkResult(VkSurfaceKHR*)> createWindowSurface);
+void vk_surface_destroy(vk_surface*, vk_instance*);
 
 // swapchain
 struct vk_swapchain

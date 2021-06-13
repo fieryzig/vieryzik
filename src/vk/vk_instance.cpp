@@ -1,6 +1,6 @@
 #include "vk.h"
 
-vk_instance* vk_instance_create()
+vk_instance* vk_instance_create(std::vector<const char*> extensions)
 {
 	auto ret = new vk_instance();
 	vk::ApplicationInfo appInfo;
@@ -12,26 +12,19 @@ vk_instance* vk_instance_create()
 		.setApiVersion(VK_MAKE_API_VERSION(0, 1, 2, 162));
 	vk::InstanceCreateInfo info;
 
-	std::vector<const char*> instanceLayerNames, instanceExtensionNames;
-
 	info.setFlags({})
-		.setPNext(nullptr) //TODO
+		.setPNext(nullptr)
 		.setPApplicationInfo(&appInfo)
-		.setEnabledLayerCount(uint32_t(instanceLayerNames.size()))
-		.setPpEnabledLayerNames(instanceLayerNames.data())
-		.setEnabledExtensionCount(uint32_t(instanceExtensionNames.size()))
-		.setPpEnabledExtensionNames(instanceExtensionNames.data());
-	ret->vkInstance = vk::createInstance(info);
+		.setEnabledLayerCount(uint32_t(enabledLayers.size()))
+		.setPpEnabledLayerNames(enabledLayers.data())
+		.setEnabledExtensionCount(uint32_t(extensions.size()))
+		.setPpEnabledExtensionNames(extensions.data());
+	ret->instance = vk::createInstance(info);
 	return ret;
 }
 
 void vk_instance_destroy(vk_instance* inst)
 {
-	inst->vkInstance.destroy();
+	inst->instance.destroy();
 	delete(inst);
-}
-
-VkInstance_T * vk_instance_get_instance(vk_instance * inst)
-{
-	return inst->vkInstance;
 }

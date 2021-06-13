@@ -10,3 +10,9 @@ vk_surface* vk_surface_create(std::function<VkResult(VkSurfaceKHR*)> createWindo
     ret->surface = vk::SurfaceKHR(vkSurface);
     return ret;
 }
+
+void vk_surface_destroy(vk_surface* vk_surf, vk_instance* vk_inst)
+{
+    vk_inst->instance.destroySurfaceKHR(vk_surf->surface);
+    delete(vk_surf);
+}

@@ -33,7 +33,7 @@ vk_swapchain * vk_swapchain_create(
 )
 {
 	auto ret = new vk_swapchain();
-	auto supportDetails = _querySwapchainSupport(device->vkPhysicalDevice, surface->surface);
+	auto supportDetails = _querySwapchainSupport(device->physicalDevice, surface->surface);
 
 	auto surfaceFormat = choose_by_cond<vk::SurfaceFormatKHR>(supportDetails.formats, [](auto each) {
 		if (each.format == vk::Format::eB8G8R8A8Srgb && each.colorSpace == vk::ColorSpaceKHR::eSrgbNonlinear) return true;
@@ -59,8 +59,8 @@ vk_swapchain * vk_swapchain_create(
 		.setPresentMode(presentMode)
 		.setClipped(vk::Bool32(true))
 		.setOldSwapchain(VK_NULL_HANDLE);
-	ret->swapchain = device->vkDevice.createSwapchainKHR(info);
-	ret->images = device->vkDevice.getSwapchainImagesKHR(ret->swapchain);
+	ret->swapchain = device->device.createSwapchainKHR(info);
+	ret->images = device->device.getSwapchainImagesKHR(ret->swapchain);
 	ret->imageFormat = surfaceFormat.format;
 	ret->extent = extent;
 	return ret;
