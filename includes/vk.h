@@ -2,6 +2,11 @@
 
 #include <vulkan/vulkan.hpp>
 
+#ifdef NDEBUG
+#else
+#define VDEBUK
+#endif
+
 // Const
 const std::vector<const char*> enabledLayers = {
     "VK_LAYER_KHRONOS_validation"
@@ -14,6 +19,9 @@ const std::vector<const char*> deviceExtensions = {
 struct vk_instance
 {
 	vk::Instance		instance = nullptr;
+#ifdef VDEBUK    
+    vk::DebugUtilsMessengerEXT debugMessenger;
+#endif    
 };
 vk_instance* vk_instance_create(std::vector<const char*>);
 void vk_instance_destroy(vk_instance*);
