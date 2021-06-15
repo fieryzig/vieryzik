@@ -1,10 +1,12 @@
-#include <GLFW/glfw3.h>
 #include "vk.h"
+#include <GLFW/glfw3.h>
 
 const uint32_t WIDTH = 800;
 const uint32_t HEIGHT = 600;
 
-int main() {
+int
+main()
+{
   glfwInit();
   glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
   glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
@@ -18,9 +20,11 @@ int main() {
 #endif
   try {
     auto vk_inst = vk_instance_create(extensions);
-    auto createWindowSurface =
-        std::bind(glfwCreateWindowSurface, vk_inst->instance, window, nullptr,
-                  std::placeholders::_1);
+    auto createWindowSurface = std::bind(glfwCreateWindowSurface,
+                                         vk_inst->instance,
+                                         window,
+                                         nullptr,
+                                         std::placeholders::_1);
     auto vk_surface = vk_surface_create(createWindowSurface);
     vk_instance_destroy(vk_inst);
   } catch (const std::exception& e) {
