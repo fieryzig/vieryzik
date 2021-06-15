@@ -1,5 +1,8 @@
 #include "vk.h"
 
+#include <Windows.h>
+#include <sstream>
+
 #ifdef VDEBUK
 PFN_vkCreateDebugUtilsMessengerEXT  pfnVkCreateDebugUtilsMessengerEXT;
 PFN_vkDestroyDebugUtilsMessengerEXT pfnVkDestroyDebugUtilsMessengerEXT;
@@ -66,12 +69,12 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debugMessageFunc( VkDebugUtilsMessageSever
             }
         }
     }
-    //std::cerr << message.str() << std::endl;
-// #ifdef _WIN32
-//     MessageBox( NULL, message.str().c_str(), "Alert", MB_OK );
-// #else
-//     std::cout << message.str() << std::endl;
-// #endif
+
+#ifdef _WIN32
+    MessageBox( NULL, message.str().c_str(), "Alert", MB_OK );
+#else
+    std::cout << message.str() << std::endl;
+#endif
     
     return false;
 }
@@ -89,24 +92,9 @@ vk_instance* vk_instance_create(std::vector<const char*> extensions)
     }
 #endif
 	auto ret = new vk_instance();
-	vk::ApplicationInfo appInfo;
-	appInfo
-		.setPApplicationName("Vulkan Test")
-		.setApplicationVersion(VK_MAKE_API_VERSION(0, 0, 0, 0))
-		.setPEngineName("Vulkan Test")
-		.setEngineVersion(VK_MAKE_VERSION(1, 0, 0))
-		.setApiVersion(VK_MAKE_API_VERSION(0, 1, 2, 162));
-    ret->instance = vk::createInstance(
-        vk::InstanceCreateInfo(
-            vk::InstanceCreateFlags(),
-            &appInfo,
-            #ifdef VDEBUK
-            enabledLayers,
-            #else
-            {},
-            #endif
-            extensions));
-	// vk::InstanceCreateInfo info;
+	vk::ApplicationInfo appInfo("VieryziK", 1, "Vieryzik", 1, VK_API_VERSION_1_1);
+	ret->instance = vk::createInstance(
+        vk::InstanceCreateInfo(vk::InstanceCreateFlags(), &appInfo, enabledLayers, extensions));
 #ifdef VDEBUK
     pfnVkCreateDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>(
         ret->instance.getProcAddr( "vkCreateDebugUtilsMessengerEXT" ) );
@@ -118,37 +106,18 @@ vk_instance* vk_instance_create(std::vector<const char*> extensions)
     if ( !pfnVkDestroyDebugUtilsMessengerEXT ) {
         throw std::runtime_error("GetInstanceProcAddr: Unable to find pfnVkDestroyDebugUtilsMessengerEXT function.");
     }
-    auto severityFlags(
-        vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose |
+    vk::DebugUtilsMessageSeverityFlagsEXT severityFlags(
+        //vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose |
         vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning |
         vk::DebugUtilsMessageSeverityFlagBitsEXT::eError);
-    auto messageTypeFlags(
+    vk::DebugUtilsMessageTypeFlagsEXT messageTypeFlags(
         vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral |
         vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation |
         vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance);
-    auto debugCreateInfo = vk::DebugUtilsMessengerCreateInfoEXT(
-        vk::DebugUtilsMessengerCreateFlagsEXT(),
-        severityFlags,
-        messageTypeFlags,
-        debugMessageFunc,
-        nullptr);
     ret->debugMessenger = ret->instance.createDebugUtilsMessengerEXT(
         vk::DebugUtilsMessengerCreateInfoEXT(
             {}, severityFlags, messageTypeFlags, &debugMessageFunc));
 #endif
-// 	info.setFlags({})
-// 		.setPApplicationInfo(&appInfo)  
-// #ifdef VDEBUK    
-// 		.setEnabledLayerCount(uint32_t(enabledLayers.size()))
-//         .setPpEnabledLayerNames(enabledLayers.data())
-//         .setPNext(&debugCreateInfo)
-// #else
-//         .setEnabledLayerCount(0)
-//         .setPNext(nullptr)
-// #endif
-//         .setEnabledExtensionCount(uint32_t(extensions.size()))
-// 		.setPpEnabledExtensionNames(extensions.data())
-// 	ret->instance = vk::createInstance(info);
 	return ret;
 }
 
@@ -156,7 +125,6 @@ void vk_instance_destroy(vk_instance* inst)
 {
 #ifdef VDEBUK
     inst->instance.destroyDebugUtilsMessengerEXT(inst->debugMessenger, nullptr);
-    //pfnVkDestroyDebugUtilsMessengerEXT(static_cast<VkInstance>(inst->instance), inst->debugMessenger, nullptr);
 #endif
 	inst->instance.destroy();
 	delete(inst);
