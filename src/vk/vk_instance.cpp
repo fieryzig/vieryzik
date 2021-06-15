@@ -19,13 +19,13 @@ VKAPI_ATTR void VKAPI_CALL vkDestroyDebugUtilsMessengerEXT( VkInstance          
   return pfnVkDestroyDebugUtilsMessengerEXT( instance, messenger, pAllocator );
 }
 
-VKAPI_ATTR VkBool32 VKAPI_CALL debugMessageFunc( VkDebugUtilsMessageSeverityFlagBitsEXT       messageSeverity,
+static VKAPI_ATTR VkBool32 VKAPI_CALL debugMessageFunc( VkDebugUtilsMessageSeverityFlagBitsEXT       messageSeverity,
                                                  VkDebugUtilsMessageTypeFlagsEXT              messageTypes,
                                                  VkDebugUtilsMessengerCallbackDataEXT const * pCallbackData,
                                                  void * /*pUserData*/ )
 {
     std::ostringstream message;
-
+    message << "VieryZik: "; 
     message << vk::to_string( static_cast<vk::DebugUtilsMessageSeverityFlagBitsEXT>( messageSeverity ) ) << ": "
             << vk::to_string( static_cast<vk::DebugUtilsMessageTypeFlagsEXT>( messageTypes ) ) << ":\n";
     message << "\t"
@@ -66,11 +66,13 @@ VKAPI_ATTR VkBool32 VKAPI_CALL debugMessageFunc( VkDebugUtilsMessageSeverityFlag
             }
         }
     }
-#ifdef _WIN32
-    MessageBox( NULL, message.str().c_str(), "Alert", MB_OK );
-#else
-    std::cout << message.str() << std::endl;
-#endif
+    //std::cerr << message.str() << std::endl;
+// #ifdef _WIN32
+//     MessageBox( NULL, message.str().c_str(), "Alert", MB_OK );
+// #else
+//     std::cout << message.str() << std::endl;
+// #endif
+    
     return false;
 }
 #endif
@@ -94,49 +96,68 @@ vk_instance* vk_instance_create(std::vector<const char*> extensions)
 		.setPEngineName("Vulkan Test")
 		.setEngineVersion(VK_MAKE_VERSION(1, 0, 0))
 		.setApiVersion(VK_MAKE_API_VERSION(0, 1, 2, 162));
-	vk::InstanceCreateInfo info;
+    ret->instance = vk::createInstance(
+        vk::InstanceCreateInfo(
+            vk::InstanceCreateFlags(),
+            &appInfo,
+            #ifdef VDEBUK
+            enabledLayers,
+            #else
+            {},
+            #endif
+            extensions));
+	// vk::InstanceCreateInfo info;
 #ifdef VDEBUK
-    vk::DebugUtilsMessengerCreateInfoExt debugCreateInfo;
-    debugCreateInfo
-        .setMessageSeverity(
-            vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose |
-            vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning |
-            vk::DebugUtilsMessageSeverityFlagBitsEXT::eError)
-        .setMessageType(
-            vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral |
-            vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation |
-            vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance)
-        .setPfnUserCallback(debugCallback);
-    
+    pfnVkCreateDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>(
+        ret->instance.getProcAddr( "vkCreateDebugUtilsMessengerEXT" ) );
+    if ( !pfnVkCreateDebugUtilsMessengerEXT ) {
+        throw std::runtime_error("GetInstanceProcAddr: Unable to find pfnVkCreateDebugUtilsMessengerEXT function.");
+    }
+    pfnVkDestroyDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT>(
+        ret->instance.getProcAddr( "vkDestroyDebugUtilsMessengerEXT" ) );
+    if ( !pfnVkDestroyDebugUtilsMessengerEXT ) {
+        throw std::runtime_error("GetInstanceProcAddr: Unable to find pfnVkDestroyDebugUtilsMessengerEXT function.");
+    }
+    auto severityFlags(
+        vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose |
+        vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning |
+        vk::DebugUtilsMessageSeverityFlagBitsEXT::eError);
+    auto messageTypeFlags(
+        vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral |
+        vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation |
+        vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance);
+    auto debugCreateInfo = vk::DebugUtilsMessengerCreateInfoEXT(
+        vk::DebugUtilsMessengerCreateFlagsEXT(),
+        severityFlags,
+        messageTypeFlags,
+        debugMessageFunc,
+        nullptr);
+    ret->debugMessenger = ret->instance.createDebugUtilsMessengerEXT(
+        vk::DebugUtilsMessengerCreateInfoEXT(
+            {}, severityFlags, messageTypeFlags, &debugMessageFunc));
 #endif
-	info.setFlags({})
-		.setPApplicationInfo(&appInfo)  
-#ifdef VDEBUK    
-		.setEnabledLayerCount(uint32_t(enabledLayers.size()))
-        .setPpEnabledLayerNames(enabledLayers.data())
-        .setPNext(&debugCreateInfo)
-#else
-        .setEnabledLayerCount(0)
-        .setPNext(nullptr)
-#endif
-        .setEnabledExtensionCount(uint32_t(extensions.size()))
-		.setPpEnabledExtensionNames(extensions.data())
-	ret->instance = vk::createInstance(info);
+// 	info.setFlags({})
+// 		.setPApplicationInfo(&appInfo)  
+// #ifdef VDEBUK    
+// 		.setEnabledLayerCount(uint32_t(enabledLayers.size()))
+//         .setPpEnabledLayerNames(enabledLayers.data())
+//         .setPNext(&debugCreateInfo)
+// #else
+//         .setEnabledLayerCount(0)
+//         .setPNext(nullptr)
+// #endif
+//         .setEnabledExtensionCount(uint32_t(extensions.size()))
+// 		.setPpEnabledExtensionNames(extensions.data())
+// 	ret->instance = vk::createInstance(info);
 	return ret;
 }
 
 void vk_instance_destroy(vk_instance* inst)
 {
 #ifdef VDEBUK
-    inst->destroyDebugUtilsMessengerEXT(inst->debugMessenger, nullptr);
+    inst->instance.destroyDebugUtilsMessengerEXT(inst->debugMessenger, nullptr);
+    //pfnVkDestroyDebugUtilsMessengerEXT(static_cast<VkInstance>(inst->instance), inst->debugMessenger, nullptr);
 #endif
 	inst->instance.destroy();
 	delete(inst);
 }
-
-#ifdef VDEBUK
-static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData) {
-    std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
-    return VK_FALSE;
-}
-#endif
