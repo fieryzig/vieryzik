@@ -15,11 +15,11 @@ jobs:
         extensions: 'h,cpp,hpp'
         clangFormatVersion: 12
         style: mozilla
-        inplace: True
-    - uses: EndBug/add-and-commit@v4
-      with:
-        author_name: fieryzig
-        author_email: duo0702@live.cn
-        message: 'clang-format lint'
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#         inplace: True
+#     - uses: EndBug/add-and-commit@v4
+#       with:
+#         author_name: fieryzig
+#         author_email: duo0702@live.cn
+#         message: 'clang-format lint'
+#       env:
+#         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
