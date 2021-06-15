@@ -14,7 +14,7 @@ jobs:
         exclude: './third_party ./external'
         extensions: 'h,cpp,hpp'
         clangFormatVersion: 12
-        style: chromium
+        style: mozilla
         inplace: True
     - uses: EndBug/add-and-commit@v4
       with:
