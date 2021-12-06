@@ -10,23 +10,41 @@ use vulkano::instance::{
     InstanceExtensions,
     ApplicationInfo,
     Version,
+    layers_list,
 };
+use vulkano::instance::debug::{
+    DebugCallback,
+    MessageType,
+    MessageSeverity,
+};
+
+const VALIDATION_LAYERS: &[&str] =  &[
+    "VK_LAYER_LUNARG_standard_validation"
+];
+
+#[cfg(all(debug_assertions))]
+const ENABLE_VALIDATION_LAYERS: bool = true;
+#[cfg(not(debug_assertions))]
+const ENABLE_VALIDATION_LAYERS: bool = false;
 
 struct App {
     instance: Arc<Instance>,
     event_loop: EventLoop<()>,
     window: Window,
+    debug_callback: Option<DebugCallback>,
 }
 
 impl App {
     pub fn init() -> Self {
         let instance = Self::create_instance();
         let (event_loop, window) = Self::init_window();
+        let debug_callback = Self::setup_debug_callback(&instance);
 
         Self {
             instance,
             event_loop,
             window,
+            debug_callback,
         }
     }
 
@@ -48,9 +66,65 @@ impl App {
             engine_version: Some(Version { major: 1, minor: 1, patch: 0 }),
         };
 
-        let required_extensions = vulkano_win::required_extensions();
-        Instance::new(Some(&app_info), Version::V1_1, &required_extensions, None)
-            .expect("failed to create Vulkan instance")
+        let mut required_extensions = vulkano_win::required_extensions();
+        if ENABLE_VALIDATION_LAYERS {
+            required_extensions.ext_debug_utils = true;
+        }
+        if ENABLE_VALIDATION_LAYERS && Self::check_validation_layer_support() {
+            Instance::new(Some(&app_info), Version::V1_1, &required_extensions, VALIDATION_LAYERS.iter().cloned())
+                .expect("failed to create Vulkan instance")
+        } else {
+            Instance::new(Some(&app_info), Version::V1_1, &required_extensions, None)
+                .expect("failed to create Vulkan instance")
+        }
+    }
+
+    fn check_validation_layer_support() -> bool {
+        let layers: Vec<_> = layers_list().unwrap().map(|l| l.name().to_owned()).collect();
+        println!("layers: {:?}", layers);
+        VALIDATION_LAYERS.iter()
+            .all(|layer_name| layers.contains(&layer_name.to_string()))
+    }
+
+    fn setup_debug_callback(instance: &Arc<Instance>) -> Option<DebugCallback> {
+        if !ENABLE_VALIDATION_LAYERS  {
+            return None;
+        }
+        let severity = MessageSeverity {
+            error: true,
+            warning: true,
+            information: true,
+            verbose: true,
+        };
+        let ty = MessageType::all();
+        DebugCallback::new(&instance, severity, ty, |msg| {
+            let severity = if msg.severity.error {
+                "error"
+            } else if msg.severity.warning {
+                "warning"
+            } else if msg.severity.information {
+                "information"
+            } else if msg.severity.verbose {
+                "verbose"
+            } else {
+                panic!("no-impl");
+            };
+
+            let ty = if msg.ty.general {
+                "general"
+            } else if msg.ty.validation {
+                "validation"
+            } else if msg.ty.performance {
+                "performance"
+            } else {
+                panic!("no-impl");
+            };
+
+            println!(
+                "{:#?} {} {}: {}",
+                msg.layer_prefix, ty, severity, msg.description
+            );
+        }).ok()
     }
 
     pub fn main_loop(&mut self) {
