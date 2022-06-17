@@ -1,26 +1,14 @@
 use std::sync::Arc;
+use vulkano::instance::debug::{DebugCallback, MessageSeverity, MessageType};
+use vulkano::instance::{layers_list, Instance, InstanceCreateInfo, InstanceExtensions};
+use winit::platform::run_return::EventLoopExtRunReturn;
 use winit::{
     event::{Event, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
-    window::{Window,WindowBuilder},
-    platform::run_return::EventLoopExtRunReturn,
-};
-use vulkano::instance::{
-    Instance,
-    InstanceExtensions,
-    ApplicationInfo,
-    Version,
-    layers_list,
-};
-use vulkano::instance::debug::{
-    DebugCallback,
-    MessageType,
-    MessageSeverity,
+    window::{Window, WindowBuilder},
 };
 
-const VALIDATION_LAYERS: &[&str] =  &[
-    "VK_LAYER_LUNARG_standard_validation"
-];
+const VALIDATION_LAYERS: &[&str] = &["VK_LAYER_LUNARG_standard_validation"];
 
 #[cfg(all(debug_assertions))]
 const ENABLE_VALIDATION_LAYERS: bool = true;
@@ -59,35 +47,22 @@ impl App {
             .expect("failed to retrieve supported extensions");
         println!("Supported extensions: {:?}", supported_extensions);
 
-        let app_info = ApplicationInfo {
-            application_name: Some("Hello Triangle".into()),
-            application_version: Some(Version { major: 1, minor: 1, patch: 0 }),
-            engine_name: Some("No Engine".into()),
-            engine_version: Some(Version { major: 1, minor: 1, patch: 0 }),
-        };
-
-        let mut required_extensions = vulkano_win::required_extensions();
-        if ENABLE_VALIDATION_LAYERS {
-            required_extensions.ext_debug_utils = true;
-        }
-        if ENABLE_VALIDATION_LAYERS && Self::check_validation_layer_support() {
-            Instance::new(Some(&app_info), Version::V1_1, &required_extensions, VALIDATION_LAYERS.iter().cloned())
-                .expect("failed to create Vulkan instance")
-        } else {
-            Instance::new(Some(&app_info), Version::V1_1, &required_extensions, None)
-                .expect("failed to create Vulkan instance")
-        }
+        Instance::new(InstanceCreateInfo::application_from_cargo_toml()).unwrap()
     }
 
     fn check_validation_layer_support() -> bool {
-        let layers: Vec<_> = layers_list().unwrap().map(|l| l.name().to_owned()).collect();
+        let layers: Vec<_> = layers_list()
+            .unwrap()
+            .map(|l| l.name().to_owned())
+            .collect();
         println!("layers: {:?}", layers);
-        VALIDATION_LAYERS.iter()
+        VALIDATION_LAYERS
+            .iter()
             .all(|layer_name| layers.contains(&layer_name.to_string()))
     }
 
     fn setup_debug_callback(instance: &Arc<Instance>) -> Option<DebugCallback> {
-        if !ENABLE_VALIDATION_LAYERS  {
+        if !ENABLE_VALIDATION_LAYERS {
             return None;
         }
         let severity = MessageSeverity {
@@ -124,11 +99,12 @@ impl App {
                 "{:#?} {} {}: {}",
                 msg.layer_prefix, ty, severity, msg.description
             );
-        }).ok()
+        })
+        .ok()
     }
 
-    pub fn main_loop(&mut self) {
-        self.event_loop.run_return(|event, _, control_flow| {
+    pub fn main_loop(self) {
+        self.event_loop.run(move |event, _, control_flow| {
             // ControlFlow::Poll continuously runs the event loop, even if the OS hasn't
             // dispatched any events. This is ideal for games and similar applications.
             *control_flow = ControlFlow::Poll;
@@ -145,7 +121,7 @@ impl App {
                 } => {
                     println!("The close button was pressed; stopping");
                     *control_flow = ControlFlow::Exit
-                },
+                }
                 Event::MainEventsCleared => {
                     // Application update code.
 
@@ -155,15 +131,15 @@ impl App {
                     // applications which do not always need to. Applications that redraw continuously
                     // can just render here instead.
                     self.window.request_redraw();
-                },
+                }
                 Event::RedrawRequested(_) => {
                     // Redraw the application.
                     //
                     // It's preferable for applications that do not render continuously to render in
                     // this event rather than in MainEventsCleared, since rendering in here allows
                     // the program to gracefully handle redraws requested by the OS.
-                },
-                _ => ()
+                }
+                _ => (),
             }
         });
     }
